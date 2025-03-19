@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,7 +24,7 @@ type Blockchain struct {
 }
 
 func main() {
-
+	run()
 }
 
 func (block *Block) culcalateHash() {
@@ -34,7 +35,7 @@ func (block *Block) culcalateHash() {
 	block.Hash = h[:]
 }
 
-func generateBlock(oldBlock Block, data []byte) (*Block, error) {
+func generateBlock(oldBlock *Block, data []byte) (*Block, error) {
 	newBlock := &Block{
 		Index:     oldBlock.Index + 1,
 		Timestamp: time.Now().Unix(),
@@ -46,17 +47,36 @@ func generateBlock(oldBlock Block, data []byte) (*Block, error) {
 	return newBlock, nil
 }
 
+func NewBlock(data []byte) error {
+
+	return nil
+}
+
 func run() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("main page")
 	})
-	mux.HandleFunc("/generateBlock", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/block/new", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("post to create block")
+		var body []byte
+		err := json.NewDecoder(r.Body).Decode(&body)
+		if err != nil {
+			w.Write([]byte(err.Error()))
+			return
+		}
+		err = NewBlock(body)
+		if err != nil {
+			w.Write([]byte(err.Error()))
+			return
+		}
 	})
 	mux.HandleFunc("/blocks", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("all blocks page")
+	})
+	mux.HandleFunc("/block/last", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("last blocks page")
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
